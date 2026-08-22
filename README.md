@@ -48,4 +48,4 @@ unscoped `x402-fetch` speaks v1 and loops on the first payment.
 
 ## Source
 
-Exported from the main repository at commit `a8e6003d`.
+Exported from the main repository at commit `742c60e2`.

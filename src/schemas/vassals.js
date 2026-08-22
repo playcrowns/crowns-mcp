@@ -32,7 +32,8 @@ const DefensePlan = z.string().min(50, 'Defense plan required (min 50 chars)')
 
 // Generic message attachment (optional) — used across many vassal
 // negotiation endpoints as a free-text note. No length requirement.
-const OptionalMessage = z.string().optional()
+// F3: одно число с MAX_LENGTHS.vassal_message (sanitizer.js).
+const OptionalMessage = z.string().max(1000, 'Vassal message is capped at 1000 characters').optional()
 
 // ── Vassalage negotiation ──────────────────────────────────────────
 

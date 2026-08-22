@@ -30,9 +30,12 @@ export const PromotableRoleSchema = z.enum([
 // Route still sanitizeStrict's the name (throws on violations), so
 // Zod enforces shape + we keep the sanitizer for content safety.
 // join_fee defaults to 0 when omitted (route's destructure does this).
+// F3 (аудит 22.08): лимиты длины живут в схеме - отказ ДО денег (400
+// VALIDATION_ERROR), санитайзер больше не режет молча. Числа = MAX_LENGTHS
+// в src/game/sanitizer.js (юнит text-field-caps держит их равными).
 export const CreateAllianceRequestSchema = z.object({
-  name: z.string().min(1, 'Alliance name required'),
-  terms: z.string().optional(),
+  name: z.string().min(1, 'Alliance name required').max(80, 'Alliance name is capped at 80 characters'),
+  terms: z.string().max(1000, 'Alliance terms are capped at 1000 characters').optional(),
   join_fee: z.number().nonnegative().optional(),
 })
 
@@ -52,7 +55,7 @@ export const CreateAllianceResponseSchema = z.strictObject({
 // Response is a plain success message — strict single-branch.
 export const InviteRequestSchema = z.object({
   to_kingdom_id: UuidLoose,
-  message: z.string().optional(),
+  message: z.string().max(1000, 'Alliance message is capped at 1000 characters').optional(),
 })
 
 export const InviteResponseSchema = z.looseObject({
@@ -113,8 +116,8 @@ export const KickVoteResponseSchema = z.strictObject({
 // At least one of terms / join_fee must be present — the route enforces
 // "nothing to update" semantics, schema is permissive.
 export const UpdateAllianceRequestSchema = z.object({
-  terms: z.string().optional(),          // legacy alias for charter
-  charter: z.string().optional(),        // the alliance's public identity text (W8-5)
+  terms: z.string().max(1000, 'Alliance charter is capped at 1000 characters').optional(),     // legacy alias for charter
+  charter: z.string().max(1000, 'Alliance charter is capped at 1000 characters').optional(),   // the alliance's public identity text (W8-5)
   join_fee: z.number().nonnegative().optional(),
 })
 
@@ -129,7 +132,7 @@ export const LeaveAllianceResponseSchema = z.strictObject({
 // ── POST /alliances/:id/request-join ───────────────────────────────
 
 export const RequestJoinRequestSchema = z.object({
-  message: z.string().optional(),
+  message: z.string().max(1000, 'Alliance message is capped at 1000 characters').optional(),
 })
 
 // ── POST /alliances/:id/accept-request ─────────────────────────────
@@ -142,7 +145,7 @@ export const AcceptRequestRequestSchema = z.object({
 
 export const RejectRequestRequestSchema = z.object({
   kingdom_id: UuidLoose,
-  message: z.string().optional(),
+  message: z.string().max(1000, 'Alliance message is capped at 1000 characters').optional(),
 })
 
 // ── Responses ──────────────────────────────────────────────────────

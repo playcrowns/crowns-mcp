@@ -94,7 +94,7 @@ export const RestartRequestSchema = z.object({
 export const ExpeditionRequestSchema = withPayloadAliases(z.object({
   event_id: z.string().min(1),
   committed_army: z.number().positive(),
-  plan: z.string().min(50, 'Expedition plan required (min 50 chars)'),
+  plan: z.string().min(50, 'Expedition plan required (min 50 chars)').max(3000, 'Expedition plan is capped at 3000 characters'),
   plan_claims: PlanClaimsSchema.optional(),
 }), { race_id: 'event_id', treasure_id: 'event_id', army: 'committed_army', troops: 'committed_army' })
 

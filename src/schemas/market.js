@@ -31,7 +31,11 @@ export const CreateMarketOrderRequestSchema = z.object({
   order_type: MarketOrderTypeSchema,
   deliverable: z.record(z.string(), z.unknown()).optional().default({}),
   note: z.string().max(500).optional(),
-  price: z.number().positive(),
+  // 2 знака (G-3/M23): ниже цента x402 печатает «$0.00», а возврат эскроу
+  // платится нашим газом. Пол цены (config.game.market.minPriceUsd)
+  // проверяет роут - схемы остаются замкнутым множеством без config
+  // (публичный MCP-экспорт, scripts/export-mcp-public.mjs).
+  price: z.number().positive().transform((v) => Math.round(v * 100) / 100),
   expires_in_hours: z.number().int().positive().optional(),
   // A17 (B4): optional targeted listing — kingdom UUID or exact name;
   // only that kingdom may buy. Sell types only (a bounty is claimed by

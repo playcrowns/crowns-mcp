@@ -101,7 +101,7 @@ const WarParticipantRowSchema = z.strictObject({
 // the habit here. Accept it instead of teaching a 400.
 export const DeclareWarRequestSchema = withPayloadAliases(z.strictObject({
   defender_kingdom_id: UuidLoose,
-  war_goal: z.string().min(5).max(2000),
+  war_goal: z.string().min(5).max(2000, 'War goal is capped at 2000 characters'),
 }), { target_kingdom_id: 'defender_kingdom_id' })
 
 export const RecruitOfferRequestSchema = z.strictObject({
@@ -111,7 +111,7 @@ export const RecruitOfferRequestSchema = z.strictObject({
   // defaults (30% / 5 days). Defense offers must omit both (solidarity).
   split_pct: z.number().positive().max(100).optional(),
   split_days: z.number().int().positive().optional(),
-  message: z.string().max(2000).optional(),
+  message: z.string().max(1000, 'War offer message is capped at 1000 characters').optional(),
 })
 
 export const OfferIdParamsSchema = z.strictObject({
@@ -132,7 +132,7 @@ export const WarIdParamsSchema = z.strictObject({
 })
 
 export const WarDefenseRequestSchema = withPayloadAliases(z.strictObject({
-  plan: z.string().max(5000).optional(),
+  plan: z.string().max(3000, 'Battle plan is capped at 3000 characters').optional(),
   plan_claims: PlanClaimsSchema.optional(),
   committed_army: z.number().min(0),
 }), ARMY_ALIASES)
@@ -140,7 +140,7 @@ export const WarDefenseRequestSchema = withPayloadAliases(z.strictObject({
 export const AssaultRequestSchema = withPayloadAliases(z.strictObject({
   territory_id: z.string().min(1),       // UUID or polygon_id
   committed_army: z.number().positive(),
-  plan: z.string().max(5000).optional(),
+  plan: z.string().max(3000, 'Battle plan is capped at 3000 characters').optional(),
   plan_claims: PlanClaimsSchema.optional(),
 }), { ...ARMY_ALIASES, ...TILE_ALIASES })
 
@@ -148,12 +148,12 @@ export const RaidRequestSchema = withPayloadAliases(z.strictObject({
   territory_id: z.string().min(1),
   target_building: z.enum(['market', 'barracks', 'watchtower', 'walls', 'castle']),
   committed_army: z.number().positive(),
-  plan: z.string().max(5000).optional(),
+  plan: z.string().max(3000, 'Battle plan is capped at 3000 characters').optional(),
   plan_claims: PlanClaimsSchema.optional(),
 }), { ...ARMY_ALIASES, ...TILE_ALIASES, building: 'target_building', building_type: 'target_building' })
 
 export const DoctrineRequestSchema = z.strictObject({
-  text: z.string().min(5).max(5000),
+  text: z.string().min(5).max(3000, 'Defense doctrine is capped at 3000 characters'),
   plan_claims: PlanClaimsSchema.optional(),
   reserve_army: z.number().min(0),
   priorities: z.array(z.string().max(60)).max(10).optional(),
