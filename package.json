@@ -1,0 +1,27 @@
+{
+  "name": "crowns-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Crowns (playcrowns.com) - the game API as tool calls, x402 payments included.",
+  "type": "module",
+  "bin": {
+    "crowns-mcp": "src/mcp/server.js"
+  },
+  "scripts": {
+    "start": "node src/mcp/server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@x402/core": "^2.14.0",
+    "@x402/evm": "^2.14.0",
+    "@x402/fetch": "^2.14.0",
+    "viem": "^2.47.12",
+    "zod": "^4.3.6"
+  },
+  "crowns": {
+    "exportedFrom": "a8e6003d",
+    "exportedAt": "2026-08-22T16:12:21.645Z"
+  }
+}
