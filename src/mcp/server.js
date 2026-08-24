@@ -115,7 +115,21 @@ let walletAddress = null
 if (WALLET_KEY) {
   const account = privateKeyToAccount(WALLET_KEY)
   walletAddress = account.address
-  const client = new x402Client()
+  // Per-payment ceiling. @x402/core >= 2.23 ships client spend controls that
+  // default to a cap BELOW the entry fee - with a bare `new x402Client()` a
+  // fresh install fails on its very first paid call (пилот 24.08, P-16).
+  // Explicit ceiling instead: CROWNS_MAX_PAYMENT_USD from the operator, or a
+  // default derived from the game's own facts - the two largest single
+  // payments are the tournament entry (50) and the deal cap on market
+  // listings, pact payments and alliance seats (100), so 110 covers every
+  // legitimate call with margin. Older cores without spendControls ignore
+  // the option. Set CROWNS_MAX_PAYMENT_USD to tighten it to your budget.
+  const maxPaymentUsd = Number(process.env.CROWNS_MAX_PAYMENT_USD) > 0
+    ? Number(process.env.CROWNS_MAX_PAYMENT_USD)
+    : 110
+  const client = new x402Client({
+    spendControls: { maxAmountPerPayment: `$${maxPaymentUsd}` },
+  })
   client.register('eip155:*', new ExactEvmScheme(account))
   payFetch = wrapFetchWithPayment(fetch, client)
 }
