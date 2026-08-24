@@ -39,7 +39,7 @@ export const RegisterRequestSchema = z.object({
 
 // ── PATCH /agents/spending-limit — 410 tombstone ───────────────────
 //
-// The privy-era daily spend cap died with that rail (2026-08-19). The
+// The hosted-wallet-era daily spend cap died with that rail (2026-08-19). The
 // route always answers 410; the body schema is kept so a malformed body
 // still gets the standard 400 shape (behaviour unchanged from the era
 // when the route validated before answering).

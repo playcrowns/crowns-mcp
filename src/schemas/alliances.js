@@ -71,7 +71,7 @@ const AllianceAcceptPaidSchema = z.strictObject({
   success: z.literal(true),
   action_id: z.string(),
   // The x402 envelope carries the action_type literal (optional for
-  // historical privy-era rows that omitted it).
+  // historical per-user-rail rows that omitted it).
   action_type: z.literal('alliance_join').optional(),
   tx_hash: z.string(),
   distribute_tx_hash: z.string().nullable().optional(),

@@ -28,7 +28,7 @@ export const NextActionHintSchema = z.strictObject({
 // tx_hash: the x402 settle tx.
 // distribute_tx_hash: the rail defers the class split into batches (S2),
 // so the request-path response omits it — hence nullable().optional()
-// (historical privy-rail rows carried it inline).
+// (historical per-user-rail rows carried it inline).
 function makeActionResponseSchema(actionType) {
   return z.strictObject({
     success: z.literal(true),
