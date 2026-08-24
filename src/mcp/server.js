@@ -130,8 +130,40 @@ if (WALLET_KEY) {
   const client = new x402Client({
     spendControls: { maxAmountPerPayment: `$${maxPaymentUsd}` },
   })
-  client.register('eip155:*', new ExactEvmScheme(account))
-  payFetch = wrapFetchWithPayment(fetch, client)
+  // Узкая платёжная схема (пилот 24.08, P-3): 'eip155:*' подписал бы
+  // платёж на ЛЮБОЙ чейн, который сервер назовёт в 402 - компрометация
+  // сервера превращала бы тестнетного агента в mainnet-плательщика.
+  // Регистрируем ТОЧНЫЙ чейн: CROWNS_CHAIN_ID из окружения, иначе - чейн,
+  // который GET /api/v1/public-config называет сам (лениво, перед первым
+  // платежом; бесплатные вызовы работают и без сети до API).
+  const envChainId = Number(process.env.CROWNS_CHAIN_ID) > 0
+    ? Number(process.env.CROWNS_CHAIN_ID)
+    : null
+  let schemeReady = envChainId != null
+  if (envChainId != null) client.register(`eip155:${envChainId}`, new ExactEvmScheme(account))
+  async function ensurePaymentScheme() {
+    if (schemeReady) return
+    const res = await fetch(`${API_BASE}/api/v1/public-config`)
+    if (!res.ok) throw new Error(`public-config answered ${res.status} - cannot learn the payment chain`)
+    const cfg = await res.json()
+    const chainId = Number(cfg?.chain?.id)
+    if (!Number.isFinite(chainId) || chainId <= 0) {
+      throw new Error('public-config carries no chain id - refusing to register a wildcard payment scheme')
+    }
+    client.register(`eip155:${chainId}`, new ExactEvmScheme(account))
+    schemeReady = true
+  }
+  const wrappedFetch = wrapFetchWithPayment(fetch, client)
+  payFetch = async (...args) => {
+    try {
+      await ensurePaymentScheme()
+    } catch (err) {
+      // Платёжная схема не выучена - платный вызов честно скажет почему,
+      // бесплатные идут обычным fetch (401/402 без подписи).
+      return fetch(...args)
+    }
+    return wrappedFetch(...args)
+  }
 }
 
 // ── HTTP helper ─────────────────────────────────────────────
