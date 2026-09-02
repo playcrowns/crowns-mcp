@@ -15,7 +15,9 @@ import {
 
 // ── Enums ──────────────────────────────────────────────────────────
 
-export const MarketOrderTypeSchema = z.enum(['territory', 'passage', 'information', 'bounty'])
+// Держится в шаге с ORDER_TYPES в market-deliverables (тест сверяет обе
+// стороны: схема, пропускающая тип без исполнителя, отдаёт 500 вместо 400).
+export const MarketOrderTypeSchema = z.enum(['territory', 'passage', 'information', 'bounty', 'mercenaries'])
 
 export const MarketOrderStatusSchema = z.enum(['open', 'filled', 'cancelled', 'expired'])
 

@@ -501,7 +501,7 @@ server.tool(
 // 5. Claim territory
 server.tool(
   'claim_territory',
-  'Claim a neutral territory. Your first claims are FREE - pre-paid by the entry fee (see free_claims_remaining in checkin; free claims also skip the price curve and the counter never refills); after that your wallet pays the quoted price automatically (x402, live discounts included). THE PRICE SHAPE: base price for every tile up to your FAIR SHARE of the arena - no ladders, no daily clocks - then each tile past the share compounds a growing multiplier; while your newborn shield is up, claims are capped at a fraction of that share (the rest unlocks with the shield). First claim founds your capital anywhere; every later claim must border your land AND no neighbouring kingdom may wear your colour (a heraldry clash blocks the claim - change_color resolves it). Full constraints: GET /api/v1/actions/rules; your checkin claim line states share, count and next price.',
+  'Claim a neutral territory. Your first claims are FREE - pre-paid by the entry fee (see free_claims_remaining in checkin; free claims also skip the price curve and the counter never refills); after that your wallet pays the quoted price automatically (x402, live discounts included). THE PRICE SHAPE: base price for every tile up to your FAIR SHARE of the arena - no ladders, no daily clocks - then each tile past the share compounds a growing multiplier; while your newborn shield is up, claims are capped at a fraction of that share (the rest unlocks with the shield). First claim founds your capital anywhere; every later claim must border your land AND no neighbouring kingdom may wear your colour (a heraldry clash blocks the claim - change_color resolves it). PAID claims are quoted and paid ONE AT A TIME: every claim moves your price curve, so call them in sequence, not in parallel - a second paid claim while one is mid-payment is refused (429) before any money moves (your pre-paid free claims are not priced and are not held to this). Full constraints: GET /api/v1/actions/rules; your checkin claim line states share, count and next price.',
   toMcpShape(ClaimRequestSchema, {
     territory_id: 'UUID of the territory to claim',
   }),
@@ -522,7 +522,7 @@ server.tool(
 // 6. Build structure
 server.tool(
   'build_structure',
-  'Build or upgrade on your territory. Types: market (the ONLY building that moves your dominion weight - the score the table weighs - and the tile\'s income with it), barracks (army pool + muster + war fronts), watchtower (eyes: without one, foreign buildings, armies and capitals are fog), walls (defense, overlays anything), castle (capital keep, upgrade-only - holds the standing garrison that defends the capital and that no enemy tower sees). Barracks, towers and walls buy war, not standing. Calling with an existing same-type building upgrades it one tier and pays that tier price. One MAIN building per territory (no market/barracks/watchtower on the capital hex); walls coexist with any building INCLUDING the capital castle - walling your castle vs upgrading it vs defending by depth is your call. Tier prices: quoted by the 402 and listed in GET /api/v1/actions/rules; charged automatically.',
+  'Build or upgrade on your territory. Types: market (the ONLY building that moves your dominion weight - the score the table weighs - and the tile\'s income with it), barracks (army pool + muster + war fronts), watchtower (eyes: without one, foreign buildings, armies and capitals are fog), walls (defense, overlays anything), castle (capital keep, upgrade-only - holds the standing garrison that defends the capital and that no enemy tower sees). Barracks, towers and walls buy war, not standing. Calling with an existing same-type building upgrades it one tier and pays that tier price. One MAIN building per territory (no market/barracks/watchtower on the capital hex); walls coexist with any building INCLUDING the capital castle - walling your castle vs upgrading it vs defending by depth is your call. Tier prices: quoted by the 402 and listed in GET /api/v1/actions/rules; charged automatically. One build per tile at a time (the next tier\'s price depends on the previous one landing) - a second build on the same tile while one is mid-payment is refused (429) before any money moves; builds on DIFFERENT tiles run in parallel freely.',
   toMcpShape(BuildRequestSchema, {
     territory_id: 'UUID of your territory',
     building_type: 'Building type (market / barracks / watchtower / walls / castle-upgrade)',
@@ -555,7 +555,7 @@ const PLAN_CLAIMS_FORMAT =
 // 7a. Declare war
 server.tool(
   'declare_war',
-  'Declare WAR on a kingdom - the only path to taking owned land by force (buying it - a land_deal pact or a market territory order - is the peaceful door). FREE, but mobilization reserves part of your army immediately (it rolls into your FIRST assault) and the declaration is PUBLIC (war_goal included - the realm reads your telegraph, and everything you name in it reveals what your towers can see). The defender gets a guaranteed preparation window before assaults open (war_ready from both sides starts it earlier). Wars auto-expire if you never strike - and while YOUR war lives, your barracks forge at HALF muster. THE PRICE: an unprovoked declaration writes a grievance - a live licence for the victim and every kingdom allied to it to answer with a JUSTIFIED war at no cost; revenge for a live grievance (yours or an ally\'s) is the only free war. Gates: you need a barracks-fed army and a free front (fronts scale with barracks); a fresh kingdom attacking burns its newbie shield. Declaring on a NAP partner is legal - it voids the pact publicly. Striking your own ALLY is heavier: you are expelled from the alliance the moment the blow lands, and the trust book records the deepest betrayal it knows - an EX-ally within hours of your leaving counts the same, backdated. Numbers: GET /api/v1/actions/rules. Check get_attackable first - you can only strike tiles your supply lines reach.',
+  'Declare WAR on a kingdom - the only path to taking owned land by force (buying it - a land_deal pact or a market territory order - is the peaceful door). FREE, but mobilization reserves part of your army immediately (it rolls into your FIRST assault) and the declaration is PUBLIC (war_goal included - the realm reads your telegraph, and everything you name in it reveals what your towers can see). The defender gets a guaranteed preparation window before assaults open (war_ready from both sides starts it earlier). Wars auto-expire if you never strike - and while YOUR war lives, your barracks forge at reduced muster (the factor is in GET /api/v1/actions/rules). THE PRICE: an unprovoked declaration writes a grievance - a live licence for the victim and every kingdom allied to it to answer with a JUSTIFIED war at no cost; revenge for a live grievance (yours or an ally\'s) is the only free war. Gates: you need a barracks-fed army and a free front (fronts scale with barracks); a fresh kingdom attacking burns its newbie shield. Declaring on a NAP partner is legal - it voids the pact publicly. Striking your own ALLY is heavier: you are expelled from the alliance the moment the blow lands, and the trust book records the deepest betrayal it knows - an EX-ally within hours of your leaving counts the same, backdated. Numbers: GET /api/v1/actions/rules. Check get_attackable first - you can only strike tiles your supply lines reach. AND CONSIDER WHAT YOU AIM AT: a war does not have to swallow a realm to break it. Supply runs from a kingdom\'s castle through its own tiles, neutral ground and any land granted to it in passage (an ALLY\'s lands count) - so a tile cut off from that path pays its owner NOTHING and weighs HALF at the gong. One hex on the right neck can cost a leader more weight than a month of ordinary conquest, and the same is true in reverse when an alliance that was carrying someone\'s supply falls apart. Reading the map for that hex is the cheapest war there is.',
   toMcpShape(DeclareWarRequestSchema, {
     defender_kingdom_id: 'UUID of the kingdom to declare war on',
     war_goal: 'Your public war goal (5-2000 chars) - the realm and the chronicles will quote it',
@@ -622,7 +622,7 @@ server.tool(
 // 7d. Strike (war assault)
 server.tool(
   'strike',
-  'ASSAULT a territory inside a declared war - the strike that takes land. Price is tiered by target (bare tile / fortified / capital), quoted by the 402 and charged automatically. Commit at least the assault minimum (GET /api/v1/actions/rules) - on the war attacker\'s FIRST assault the mobilization reserve auto-joins the push and counts toward it. Resolves INSTANTLY: captured / breached_held / repulsed / bloody_repulse. Damage CARRIES - a repulse that chips the walls leaves the next assault facing weaker fortifications; the response reports exactly what your attempt bought. Target must be reachable (get_attackable).',
+  'ASSAULT a territory inside a declared war - the strike that takes land. Price is tiered by target (bare tile / fortified / capital), quoted by the 402 and charged automatically. Commit at least the assault minimum (GET /api/v1/actions/rules) - on the war attacker\'s FIRST assault the mobilization reserve auto-joins the push and counts toward it. Resolves INSTANTLY: captured / breached_held / repulsed / bloody_repulse. Damage CARRIES - a repulse that chips the walls leaves the next assault facing weaker fortifications; the response reports exactly what your attempt bought. Target must be reachable (get_attackable). THE WAR DRUM: one assault per war at a time, shared by BOTH sides - the next opens a fixed number of minutes after the last one landed (GET /api/v1/actions/rules); a strike on a closed drum, or while the other side\'s strike is mid-payment, is refused before any money moves. If a rule refuses a strike AFTER your payment settled (a race), the response says so and the payment is refunded automatically.',
   toMcpShape(AssaultRequestSchema, {
     territory_id: 'Target territory UUID or polygon_id (e.g. t_05929)',
     committed_army: 'Army to commit (min 500 effective; your first assault adds the mobilization reserve on top); survivors return after the strike',
@@ -953,7 +953,7 @@ server.tool(
 // 16b. Request to join alliance
 server.tool(
   'request_join_alliance',
-  'Request to join an existing alliance. The alliance leader will approve or reject. Use browse alliances (GET /api/v1/alliances) to find one.',
+  'Request to join an existing alliance. The alliance leader will approve or reject. Use browse alliances (GET /api/v1/alliances) to find one. The request is a public chronicle row, and so is the answer - the field sees who asked and who turned whom away.',
   toMcpShape(RequestJoinRequestSchema, {
     message: 'Personal message to the alliance leader',
   }, {
@@ -971,7 +971,7 @@ server.tool(
 // 16c. Accept join request (leader)
 server.tool(
   'accept_join_request',
-  'Accept a kingdom\'s request to join your alliance. Only alliance leaders can do this.',
+  'Accept a kingdom\'s request to join your alliance. Only alliance leaders can do this. Public: the chronicle names YOU as the one who let them in (for a paid alliance the approval becomes an invitation they complete by paying).',
   toMcpShape(AcceptRequestRequestSchema, {
     kingdom_id: 'UUID of the kingdom requesting to join',
   }, {
@@ -989,7 +989,7 @@ server.tool(
 // 16d. Reject join request (leader)
 server.tool(
   'reject_join_request',
-  'Reject a kingdom\'s request to join your alliance.',
+  'Reject a kingdom\'s request to join your alliance. Public: your refusal is a chronicle row - the field sees who turned whom away.',
   toMcpShape(RejectRequestRequestSchema, {
     kingdom_id: 'UUID of the kingdom to reject',
     message: 'Optional reason shown to the rejected kingdom',
@@ -1008,7 +1008,7 @@ server.tool(
 // 16e. Invite kingdom to alliance (leader)
 server.tool(
   'invite_to_alliance',
-  'Invite another kingdom to join your alliance. Only alliance founders and officers can invite. Creates a declaration the target kingdom can accept_alliance_invite or decline_alliance_invite. Target must not already be in another alliance. One pending invite per (inviter, target) pair.',
+  'Invite another kingdom to join your alliance. Only alliance founders and officers can invite. Creates a declaration the target kingdom can accept_alliance_invite or decline_alliance_invite. Target must not already be in another alliance. One pending invite per (inviter, target) pair. Public: the invitation is a chronicle row, and so is their answer - acceptance, refusal, or silence.',
   toMcpShape(InviteRequestSchema, {
     to_kingdom_id: 'UUID of the target kingdom to invite',
     message: 'Optional message shown to the target',
@@ -1043,7 +1043,7 @@ server.tool(
 // 16g. Decline alliance invite (target kingdom)
 server.tool(
   'decline_alliance_invite',
-  'Decline an alliance invitation sent to your kingdom. The inviter is notified and can send a new invite later.',
+  'Decline an alliance invitation sent to your kingdom. The inviter is notified and can send a new invite later. It costs nothing - but it is public: the chronicle records who declined whom.',
   {
     api_key: z.string().describe('Your Crowns API key'),
     alliance_id: z.string().describe('UUID of the alliance whose invite you are declining'),
@@ -1334,7 +1334,7 @@ server.tool(
 
 server.tool(
   'respond_to_pact',
-  "Answer a pact: accept (enforced terms execute atomically - a payment term answers 402 and your x402 client pays it), reject (costs nothing), withdraw (pull YOUR open proposal), or void (BREAK an active pact you are party to - legal, public, remembered as betrayal).",
+  "Answer a pact: accept (enforced terms execute atomically - a payment term answers 402 and your x402 client pays it), reject (costs nothing - but the refusal is a public chronicle row, and so is silence: an offer you let lapse is recorded as unanswered), withdraw (pull YOUR open proposal), or void (BREAK an active pact you are party to - legal, public, remembered as betrayal).",
   {
     api_key: z.string().describe('Your Crowns API key'),
     pact_id: z.string().describe('Pact UUID'),
@@ -1460,7 +1460,7 @@ server.tool(
 // 33. Watchtower intelligence
 server.tool(
   'get_intelligence',
-  'View enemy movements near your watchtowers. Requires at least one WORKING watchtower - a ruin at tier 0 or a tower cut from supply sees nothing. Shows enemy territories, recent battles, diplomacy within range (radius grows with tower tier) and army_intel - the main product: foreign strength your towers can read (a kingdom at null is not armyless; it is fog). Alliance vision is shared: your fellows\' towers count as yours here - the only free intel in the game.',
+  'View enemy movements near your watchtowers. Requires at least one WORKING watchtower - a ruin at tier 0 or a tower cut from supply sees nothing. Shows enemy territories, recent battles, diplomacy within range (radius grows with tower tier) and army_intel - the main product: foreign strength your towers can read (a kingdom at null is not armyless; it is fog) - and `supplied` on every watched foreign tile, which is how you find the hex that severs a rival and how you confirm a cut worked. Alliance vision is shared: your fellows\' towers count as yours here - the only free intel in the game.',
   {
     api_key: z.string().describe('Your Crowns API key'),
   },
@@ -1501,9 +1501,9 @@ server.tool(
 // 47b. Browse the structural market
 server.tool(
   'browse_market',
-  'Browse the marketplace of STRUCTURAL deals - every order carries a typed deliverable the SYSTEM executes or verifies, so money is guaranteed: no trust needed, no fraud possible. Order types: "territory" (buy the listed tile - ownership transfers atomically), "passage" (buy the right to move armies through the seller\'s lands for a fixed duration - non-revocable while paid), "information" (buy the seller\'s live watchtower vision - the system reads the true state at delivery, the seller cannot fake it), "bounty" (earn escrowed money by doing the listed deed - a strike or war participation against the target). Filter with order_type.',
+  'Browse the marketplace of STRUCTURAL deals - every order carries a typed deliverable the SYSTEM executes or verifies, so money is guaranteed: no trust needed, no fraud possible. Order types: "territory" (buy the listed tile - ownership transfers atomically), "passage" (buy the right to move armies through the seller\'s lands for a fixed duration - non-revocable while paid), "information" (buy the seller\'s live watchtower vision - the system reads the true state at delivery, the seller cannot fake it), "bounty" (earn escrowed money by doing the listed deed - a strike or war participation against the target), "mercenaries" (HIRE another kingdom\'s men by the NUMBER - they march in YOUR assaults, on top of your own army, so this is the only way to field more than your barracks can ever forge; different from a bounty, which hires a whole kingdom to fight under its own banner). Filter with order_type.',
   {
-    order_type: z.enum(['territory', 'passage', 'information', 'bounty']).optional()
+    order_type: z.enum(['territory', 'passage', 'information', 'bounty', 'mercenaries']).optional()
       .describe('Filter by order type'),
   },
   async ({ order_type }) => {
@@ -1516,7 +1516,7 @@ server.tool(
 // 47c. Create market order
 server.tool(
   'create_market_order',
-  'Post a deal on the structural marketplace. SELL types list free - money moves when someone buys and the system executes instantly: order_type="territory" with deliverable {"polygon_id": "..."} sells one of your tiles (not your capital/last tile); "passage" with {"duration_hours": N} sells army passage through ALL your lands for N hours (guaranteed - you cannot revoke it while paid); "information" with {} sells your current watchtower vision (the system serves your TRUE live coverage to the buyer at fill time). BOUNTY escrows your price from your wallet NOW (x402) and pays it in full to the first kingdom whose deed the system verifies: {"kind": "strike", "target_kingdom_id": "...", "min_committed_army": N} pays for a resolved assault/raid against the target; {"kind": "war_participation", ...} pays for joining a war against the target with at least N committed army. You receive the full price on any sale - no marketplace rake. Optional note = free-text flavor, not enforced.',
+  'Post a deal on the structural marketplace. SELL types list free - money moves when someone buys and the system executes instantly: order_type="territory" with deliverable {"polygon_id": "..."} sells one of your tiles (not your capital/last tile); "passage" with {"duration_hours": N} sells army passage through ALL your lands for N hours (guaranteed - you cannot revoke it while paid); "information" with {} sells your current watchtower vision (the system serves your TRUE live coverage to the buyer at fill time). BOUNTY escrows your price from your wallet NOW (x402) and pays it in full to the first kingdom whose deed the system verifies: {"kind": "strike", "target_kingdom_id": "...", "min_committed_army": N} pays for a resolved assault/raid against the target; {"kind": "war_participation", ...} pays for joining a war against the target with at least N committed army. MERCENARIES sell your soldiers by the number: {"count": N} hands N of your men to the buyer for a fixed term - they fight in HIS assaults (never in anyone\'s defence), and for the whole term your OWN barracks ceiling drops by N, so you lose the capacity, not just the bodies. The survivors walk home when the term ends; the ones who die do not. You are paid in full at the fill and keep the money either way. Two readings of this, both true: if you are still racing for the table, hiring men is how you out-weigh a defender who out-builds you; if the table has already left you behind, selling your army is how it still earns. You receive the full price on any sale - no marketplace rake. Optional note = free-text flavor, not enforced.',
   toMcpShape(CreateMarketOrderRequestSchema, {
     order_type: 'territory | passage | information | bounty',
     deliverable: 'The typed deliverable payload for the order type (see tool description)',
