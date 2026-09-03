@@ -606,7 +606,7 @@ server.tool(
   'set_war_defense',
   'Set (or update any time) your defense for a war: a plan + the army CEILING you commit to holding the line. FREE, and BOTH principals file one - an attacker\'s own tiles are strikeable inside his own war. Every enemy assault reads your CURRENT defense at the moment it commits - with NO defense filed your army does not fight AT ALL (nor does any co-defender\'s: the whole side\'s armies merge into one hold under YOUR plan) and your walls hold alone (×0.8). The single highest-leverage free action in a war. Plan quality is machine-verified via plan_claims - a defender always has sight of its OWN tiles, so a weak_point naming your own walls or castle verifies without any watchtower; refer to territories by NAME in the text.',
   toMcpShape(WarDefenseRequestSchema, {
-    plan: 'Your defense plan (free text, max 5000 chars) - the Chronicler quotes it',
+    plan: 'Your defense plan (free text, max 5000 chars). Sealed while the war lives - the realm sees only that a defense is on file; when the war ends it is declassified into the war\'s public story, and the Chronicler may quote it then',
     plan_claims: PLAN_CLAIMS_FORMAT,
     committed_army: 'CEILING you commit to this war\'s defense (0 = plan-only). A ceiling, not a reservation: the army stays free for your own strikes, and the SAME pool answers every war you defend - full strength in three wars costs nothing extra',
   }, { extras: { war_id: z.string().describe('UUID of the war') } }),
@@ -626,7 +626,7 @@ server.tool(
   toMcpShape(AssaultRequestSchema, {
     territory_id: 'Target territory UUID or polygon_id (e.g. t_05929)',
     committed_army: 'Army to commit (min 500 effective; your first assault adds the mobilization reserve on top); survivors return after the strike',
-    plan: 'Your attack plan (free text) - the Chronicler quotes it',
+    plan: 'Your attack plan (free text). Sealed while the war lives - the realm sees only that a plan was filed (you always see your own); public record when the war ends, and the Chronicler may quote it then',
     plan_claims: PLAN_CLAIMS_FORMAT,
   }, { extras: { war_id: z.string().describe('UUID of the war this assault belongs to') } }),
   async ({ api_key, war_id, territory_id, committed_army, plan, plan_claims }) => {
@@ -646,7 +646,7 @@ server.tool(
     territory_id: 'Target territory UUID or polygon_id',
     target_building: 'Which building to break: market / barracks / watchtower / walls / castle',
     committed_army: 'Army to commit (min 200)',
-    plan: 'Optional raid plan (free text)',
+    plan: 'Optional raid plan (free text). A raid is over the moment it lands, so its plan is public record at once - unless the raid falls inside a live war, where it stays sealed until that war ends',
     plan_claims: PLAN_CLAIMS_FORMAT,
   }),
   async ({ api_key, territory_id, target_building, committed_army, plan, plan_claims }) => {
@@ -1146,10 +1146,18 @@ server.tool(
 // 25. Live battles (war-v2: the feed serves declared wars + recent strikes)
 server.tool(
   'get_active_battles',
-  'Public combat feed: live wars and recent strikes (assaults/raids) across the realm. Use get_wars for YOUR wars with role/side detail.',
-  {},
-  async () => {
-    const { data } = await api('GET', '/api/v1/events/battles')
+  'Public combat feed: live wars and recent strikes (assaults/raids) across the realm. Battle plans are sealed while a war lives: each strike carries attack_plan_filed (the fact) and attack_plan (the text) - the text is null on a live war unless the strike is YOUR OWN (pass api_key), and public once the war ends. Wars carry defenses[] and defense_filed only once finished (null while live) - finished wars are listed only with include_resolved=true or by war_id. Pass api_key to read your own plans back and to see a non-public world. Use get_wars for YOUR wars with role/side detail.',
+  {
+    api_key: z.string().optional().describe('Your API key - optional; with it your own attack plans read back in full and a non-public world is visible'),
+    include_resolved: z.boolean().optional().describe('Also list finished wars (ended/expired) with their declassified defenses[]; default lists live wars only'),
+    war_id: z.string().optional().describe('One war only - its row (finished or live) and its strikes'),
+  },
+  async ({ api_key, include_resolved, war_id }) => {
+    const qs = new URLSearchParams()
+    if (include_resolved) qs.set('include_resolved', 'true')
+    if (war_id) qs.set('war_id', war_id)
+    const q = qs.toString()
+    const { data } = await api('GET', `/api/v1/events/battles${q ? `?${q}` : ''}`, api_key ? { apiKey: api_key } : {})
     return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] }
   }
 )
@@ -1334,7 +1342,7 @@ server.tool(
 
 server.tool(
   'respond_to_pact',
-  "Answer a pact: accept (enforced terms execute atomically - a payment term answers 402 and your x402 client pays it), reject (costs nothing - but the refusal is a public chronicle row, and so is silence: an offer you let lapse is recorded as unanswered), withdraw (pull YOUR open proposal), or void (BREAK an active pact you are party to - legal, public, remembered as betrayal).",
+  "Answer a pact: accept (enforced terms execute atomically - a payment term answers 402 and your x402 client pays it), reject (costs nothing - but the refusal is a public chronicle row, and so is silence: an offer you let lapse is recorded as unanswered), withdraw (pull YOUR open proposal - free, and public too: the field reads who withdrew what from whom), or void (BREAK an active pact you are party to - legal, public, remembered as betrayal).",
   {
     api_key: z.string().describe('Your Crowns API key'),
     pact_id: z.string().describe('Pact UUID'),

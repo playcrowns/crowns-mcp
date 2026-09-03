@@ -460,6 +460,18 @@ export const WarViewResponseSchema = z.strictObject({
     kingdom_id: UuidLoose,
     kingdom_name: z.string(),
   }).nullable(),
+  // 03.09 («планы симметричны»): every filed defense of a finished war —
+  // both principals may file one; the singular above is its first row
+  // (kept for older readers). Empty on a live war.
+  declassified_defenses: z.array(z.strictObject({
+    plan: z.string(),
+    kingdom_id: UuidLoose,
+    kingdom_name: z.string(),
+  })),
+  // The FACT «the defender's defense is on file»: true/false for a party
+  // to the war (either side) and for anyone once the war is over; null
+  // for a third kingdom while the war lives (S14: no map of safe targets).
+  defense_filed: z.boolean().nullable(),
   // W5b2: who fights here besides the principals (committed_army gated to
   // the viewer's own side), and — for a principal — their pending offers.
   participants: z.array(WarViewParticipantSchema),

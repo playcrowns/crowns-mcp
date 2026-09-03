@@ -188,8 +188,11 @@ export const EventsNotificationsResponseSchema = z.strictObject({
 })
 
 // GET /events/battles — public combat feed (war-v2 W6 display swap):
-// declared wars + recent strikes. Defense plans are never present;
-// war_goal/attack_plan are framed for LLM consumption.
+// declared wars + recent strikes. Battle plans are sealed while a war
+// lives (03.09): strikes carry attack_plan_filed always and attack_plan
+// only on a finished war (or to its author); wars carry defenses[] and
+// defense_filed only once finished (null while live). war_goal and every
+// plan text are framed for LLM consumption.
 export const EventsBattlesResponseSchema = z.strictObject({
   wars: z.array(z.looseObject({ id: z.string() })),
   strikes: z.array(z.looseObject({ id: z.string() })),
@@ -217,4 +220,9 @@ export const EventsPulseResponseSchema = z.strictObject({
   structures_improved: z.number(),
   structures_razed: z.number(),
   repairs_started: z.number(),
+  // война в пульсе (THIS DAY, 03.09): те же одни числа, без имён и мест
+  wars_declared: z.number(),
+  assaults_landed: z.number(),
+  tiles_taken: z.number(),
+  pacts_sealed: z.number(),
 })
